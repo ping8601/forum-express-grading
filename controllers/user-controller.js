@@ -41,8 +41,15 @@ const userController = {
     const { id } = req.params
     const user = getUser(req)
     return Promise.all([
-      User.findByPk(id, { raw: true }),
-      Comment.findAndCountAll({
+      User.findOne({
+        where: { id },
+        include: [
+          { model: User, as: 'Followers' },
+          { model: User, as: 'Followings' },
+          { model: Restaurant, as: 'FavoritedRestaurants' }
+        ]
+      }),
+      Comment.findAll({
         include: Restaurant,
         where: { userId: id },
         raw: true,
@@ -50,11 +57,19 @@ const userController = {
       })
     ])
       .then(([viewedUser, comments]) => {
+        // use set to remove duplicate
+        console.log(viewedUser)
+        const commentedRestaurants = [...new Set(comments.map(comment => JSON.stringify(comment.Restaurant)))].map(restaurant => JSON.parse(restaurant))
         if (!viewedUser) throw new Error("User doesn't exist!")
+        const result = {
+          ...viewedUser.toJSON(),
+          isFollowed: viewedUser.Followers.some(follower => follower.id === req.user.id)
+        }
+        console.log(result)
         res.render('users/profile', {
           user,
-          viewedUser,
-          comments
+          viewedUser: result,
+          commentedRestaurants
         })
       })
       .catch(err => next(err))
@@ -200,6 +215,7 @@ const userController = {
     ])
       .then(([user, followship]) => {
         if (!user) return new Error("User doesn't exist!")
+        if (followingId === followerId) return new Error('You cannot follow yourself!')
         if (followship) return new Error('You have already followed the user!')
         return Followship.create({
           followerId,
