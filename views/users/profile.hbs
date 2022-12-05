@@ -18,11 +18,11 @@
           <a href="/users/{{ viewedUser.id }}/edit" class="btn btn-primary">Edit</a>
         {{else}}
         {{#if viewedUser.isFollowed }}
-        <form action="/following/{{this.id}}?_method=DELETE" method="POST" style="display: contents;">
+        <form action="/following/{{viewedUser.id}}?_method=DELETE" method="POST" style="display: contents;">
           <button type="submit" class="btn btn-danger">取消追蹤</button>
         </form>
         {{else}}
-        <form action="/following/{{this.id}}" method="POST" style="display: contents;">
+        <form action="/following/{{viewedUser.id}}" method="POST" style="display: contents;">
           <button type="submit" class="btn btn-primary">追蹤</button>
         </form>
         {{/if}}
